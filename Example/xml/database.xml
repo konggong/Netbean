@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<properties>
+<!--
+    /* INFORMIXSERVER (INFORMIXSERVER environment variable.)
+     * echo $INFORMIXSERVER
+     *
+     * PORT
+     * netstat -ln | grep -i tcp
+     * netstat -ln | grep -i {IP}
+     *
+     */
+-->
+<!-- 
+    <comment>Informix KCC ba</comment>
+    <entry key="url">jdbc:informix-sqli://10.22.13.63:2546/ba:INFORMIXSERVER=online1</entry>
+	<entry key="utf8">;DB_LOCALE=th_th.thai620</entry>
+    <entry key="username">informix</entry>
+    <entry key="password">informix</entry>
+    <entry key="classname">com.informix.jdbc.IfxDriver</entry>
+-->
+<!--
+    <comment>Informix 10.22.21.28 ba_imp</comment>
+    <entry key="url">jdbc:informix-sqli://10.22.21.28:61000/ba_imp:INFORMIXSERVER=sbaserver</entry>
+	<entry key="utf8"></entry>
+    <entry key="username">infoconn</entry>
+    <entry key="password">infoconn@freewill"</entry>
+    <entry key="classname">com.informix.jdbc.IfxDriver</entry>
+-->
+<!--
+    <comment>Informix SBAIMP2 nsn</comment>
+    <entry key="url">jdbc:informix-sqli://10.22.13.7:61000/nsn:INFORMIXSERVER=online6</entry>
+	<entry key="utf8"></entry>
+    <entry key="username">infoconn</entry>
+    <entry key="password">infoconn@freewill"</entry>
+    <entry key="classname">com.informix.jdbc.IfxDriver</entry>
+-->
+<!--
+    <comment>SQL Server</comment>
+    <entry key="url">jdbc:sqlserver://localhost:1433;databaseName=PWWINC</entry>
+	<entry key="utf8"></entry>
+    <entry key="username">sa</entry>
+    <entry key="password">1234566</entry>
+    <entry key="classname">com.microsoft.sqlserver.jdbc.SQLServerDriver</entry>
+-->
+<!-- -->
+    <comment>aroma</comment>
+    <entry key="url">jdbc:informix-sqli://10.22.11.22:2547/pr:INFORMIXSERVER=sbaserver</entry>
+	<entry key="utf8">;DB_LOCALE=th_th.thai620</entry>
+    <entry key="username">informix</entry>
+    <entry key="password">informix</entry>
+    <entry key="classname">com.informix.jdbc.IfxDriver</entry>
+
+<!--
+    <comment>MySQL</comment>
+    <entry key="url">jdbc:mysql://localhost:3306/dbtest</entry>
+    <entry key="utf8">?useUnicode=true&amp;characterEncoding=UTF-8</entry>
+    <entry key="username">root</entry>
+    <entry key="password">123456</entry>
+    <entry key="classname">org.gjt.mm.mysql.Driver</entry>
+ -->
+<!-- 
+    <comment>MySQL</comment>
+    <entry key="url">jdbc:mysql://emerald:3306/authendb</entry>
+    <entry key="utf8">?useUnicode=true&amp;characterEncoding=UTF-8</entry>
+    <entry key="username">mysql</entry>
+    <entry key="password">password</entry>
+    <entry key="classname">org.gjt.mm.mysql.Driver</entry>
+-->
+<!--  
+    <comment>H2</comment>
+    <entry key="url">jdbc:h2:~/test</entry>
+    <entry key="utf8"></entry>
+    <entry key="username">sa</entry>
+    <entry key="password"></entry>
+    <entry key="classname">org.h2.Driver</entry>
+-->
+</properties>

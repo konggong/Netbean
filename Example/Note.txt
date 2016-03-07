@@ -1,0 +1,2 @@
+example.file.writer
+    Writer01.java       - เขียนต่อท้ายไฟล์ได้
