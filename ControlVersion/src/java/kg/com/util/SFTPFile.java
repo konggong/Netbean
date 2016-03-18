@@ -1,3 +1,4 @@
+package kg.com.util;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,22 +12,26 @@ import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.ChannelSftp.LsEntry;
 import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
+import com.jcraft.jsch.SftpException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 
-public class FtpsFileList {
+public class SFTPFile {
 
-    private static final Logger LOG = LoggerFactory.getLogger(FtpsFileList.class);
+    private final Logger LOG = LoggerFactory.getLogger(SFTPFile.class);
 
     public static void main(String[] args) {
         //listFileNames("10.22.13.63", 22, "pww", "pww", "/home/pww");
-        String str = readFile("10.22.13.63", 22, "pww", "pww", "/home/4gl/client/src/jpfr001.4gl");
+        SFTPFile sftpfile = new SFTPFile();
+        String str = sftpfile.readFile("10.22.13.63", 22, "pww", "pww", "/home/4gl/client/src/jpfr001.4gl");
         System.out.println(str);
     }
 
-    private static String readFile(String host, int port, String username, final String password, String filename) {
+    public String readFile(String host, int port, String username, final String password, String filename) {
         ChannelSftp sftp = null;
         Channel channel = null;
         Session sshSession = null;
@@ -51,7 +56,7 @@ public class FtpsFileList {
             InputStream obj_InputStream = sftp.get(filename);
             char[] ch_Buffer = new char[0x10000];
             Reader reader = new InputStreamReader(obj_InputStream, "UTF-8");
-            int int_Line = 0;
+            int int_Line;
             do {
                 int_Line = reader.read(ch_Buffer, 0, ch_Buffer.length);
                 if (int_Line > 0) {
@@ -60,8 +65,12 @@ public class FtpsFileList {
             } while (int_Line >= 0);
             reader.close();
 
-        } catch (Exception e) {
-            System.out.println("Error : " + e.getMessage());
+        } catch (JSchException e) {
+            System.out.println("Error JSchException : " + e.getMessage());
+        } catch (SftpException e) {
+            System.out.println("Error SftpException : " + e.getMessage());
+        } catch (IOException e) {
+            System.out.println("Error IOException : " + e.getMessage());
         } finally {
             closeChannel(sftp);
             closeChannel(channel);
@@ -72,7 +81,7 @@ public class FtpsFileList {
 
     }
 
-    private static List<String> listFileNames(String host, int port, String username, final String password, String dir) {
+    public List<String> listFileNames(String host, int port, String username, final String password, String dir) {
         List<String> list = new ArrayList<String>();
         ChannelSftp sftp = null;
         Channel channel = null;
@@ -96,7 +105,9 @@ public class FtpsFileList {
                 LsEntry entry = (LsEntry) item;
                 System.out.println(entry.getFilename());
             }
-        } catch (Exception e) {
+        } catch (JSchException e) {
+            System.out.println("Error : " + e.getMessage());
+        } catch (SftpException e) {
             System.out.println("Error : " + e.getMessage());
         } finally {
             closeChannel(sftp);
@@ -106,7 +117,7 @@ public class FtpsFileList {
         return list;
     }
 
-    private static void closeChannel(Channel channel) {
+    private void closeChannel(Channel channel) {
         if (channel != null) {
             if (channel.isConnected()) {
                 channel.disconnect();
@@ -114,11 +125,12 @@ public class FtpsFileList {
         }
     }
 
-    private static void closeSession(Session sshSession) {
+    private void closeSession(Session sshSession) {
         if (sshSession != null) {
             if (sshSession.isConnected()) {
                 sshSession.disconnect();
             }
         }
     }
+
 }

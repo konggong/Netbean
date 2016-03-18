@@ -3,10 +3,11 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/D:/work/ControlVersion/web/demo_diff.html</file>
-            <file>file:/D:/work/ControlVersion/src/java/FtpsFileList.java</file>
-            <file>file:/D:/work/ControlVersion/web/index.jsp</file>
-            <file>file:/D:/work/ControlVersion/web/test.html</file>
+            <file>file:/D:/Project/example/ControlVersion/web/demo_diff.html</file>
+            <file>file:/D:/Project/example/ControlVersion/src/java/kg/com/util/SFTPFile.java</file>
+            <file>file:/D:/Project/example/ControlVersion/web/jsp/error.jsp</file>
+            <file>file:/D:/Project/example/ControlVersion/web/js/sftp.js</file>
+            <file>file:/D:/Project/example/ControlVersion/web/jsp/getFile.jsp</file>
         </group>
     </open-files>
 </project-private>
