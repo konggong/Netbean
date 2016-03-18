@@ -1,0 +1,505 @@
+#===========================================================================
+# SCCS ID         : %A% %E% %U%
+# Program Name    : KSR202.4GL Daily Unit-In-Set Control Report (TACCBAL)
+# Programmer Name : kyj
+# Parameters      : @Date
+# Paper Size      : 15cpi 195 col
+# KHIS Version 1.6  : pww 25/08/15 PR-20150528-00001 : Add input showbyloc.
+# KHIS Version 1.5  : stck 21/06/13 PR-20130619-00002 : Edit query for calculate outstanding of stock.
+# KHIS Version 1.4  : ntp 20/09/10 PR-20100914-00001 : modify layout and format unit
+# KHIS Version 1.3  : srkn 30/03/07 PR-20061222-00001 : Edit field taccbal.date -> taccbal.date_code
+# KHIS Version 1.2  : aks 07/08/06 PR-20060724-00003 : Add Sharetype G & H
+#===========================================================================
+globals "blk000.4gl"
+define flagdat smallint
+define in record
+       date1         date,
+       showbyloc     char(1)
+       end record
+define HEAD1         char(260),
+       HEAD2         char(260),
+       DETAIL1       char(260),
+       LINE1         char(260)
+define FILE_IN       char(60)
+define l_yesterday   date
+define l_compa       char(10)
+#---------------------------------------------------------------------------
+main
+  call kn_init_report(0)
+  call start_values()
+  call set_layout()
+  call print_data()
+  call kn_finish_report(0)
+end main
+#---------------------------------------------------------------------------
+function start_values()
+   let in.date1     = arg_val(1)
+   let in.showbyloc = arg_val(2)
+ 
+   if in.date1 is null then
+      let in.date1 = KN_DATE
+   end if
+ 
+   if in.showbyloc is null or length(in.showbyloc) = 0 then
+      let in.showbyloc = '0'
+   end if
+ 
+   let l_yesterday = kd_bankdate(in.date1,-1)
+   let l_compa = companame(ks_sdmdesc(KN_TCC.compsdcid,2),6)
+    
+end function
+#---------------------------------------------------------------------------
+function companame(_name,_len)
+#---------------------------------------------------------------------------
+define _name      char(40)
+define _len       smallint
+define namelen    smallint
+   let namelen = ((_len - length(_name)) / 2) + length(_name)
+   while (length(_name) < namelen)
+      let _name = " ",_name clipped
+   end while
+   return _name[1,_len]
+end function
+#---------------------------------------------------------------------------
+function print_data()
+#---------------------------------------------------------------------------
+ 
+    select sharecode,loccode,inunit,0 outunit,inpurpose purpose
+      from mlsd
+     where loctype = '2'
+       and (matdate is null or matdate > l_yesterday )     
+       and inrealdate <= l_yesterday
+     union all
+    select sharecode,loccode,0 inunit,(-1*outunit) outunit,outpurpose purpose
+      from mlsd
+     where loctype = '2'
+       and (matdate is null or matdate > l_yesterday)
+       and outrealdate <= l_yesterday
+      into temp tmpmlsd with no log
+ 
+    select distinct purpose from tmpmlsd
+      into temp tmp_pp with no log
+ 
+    select purpose from tmp_pp , tpps
+     where p_isinset(purpose,pospurpose) = '1'
+      into temp tmptpps with no log
+ 
+    select sharecode,loccode,sum(inunit) inunit,sum(outunit) outunit
+      from tmpmlsd , tmptpps
+     where (tmpmlsd.purpose = tmptpps.purpose)
+     group by 1,2
+      into temp tmpmlsd1 with no log
+ 
+    select sharecode,loccode,sum(inunit+outunit) nvunit
+      from tmpmlsd1
+     group by sharecode ,loccode
+      into temp temp_select with no log
+    create index mlsd_index on temp_select(sharecode)
+ 
+   if in.showbyloc = '0' then
+      call report0_loc()
+   else
+      call report1_loc()
+   end if
+ 
+end function
+#---------------------------------------------------------------------------
+function report0_loc()
+#---------------------------------------------------------------------------
+define d record
+       type          char(1),
+       nvsharecode   like tst.sharecode,
+       nvunit        like mlsd.inunit,
+       sdcsharecode  like tst.sharecode,
+       sdcunit       like mlsd.inunit,
+       diffunit      like mlsd.inunit
+  end record
+define str           char(500)
+ 
+#StartSQL
+ 
+    select sharecode,sum(unit) sdcunit
+     from taccbal
+    where taccbal.date_code = l_yesterday
+    group by sharecode
+     into temp sdc_tab with no log
+    create index scd_index on sdc_tab(sharecode)
+ 
+    let str = "select sum(sdcunit) ",
+              "  from sdc_tab ",
+              " where sharecode = ? "
+    prepare sdc_cur from str
+    declare sdc_cursor cursor for sdc_cur
+ 
+    let str = "select sum(nvunit) ",
+              " from temp_select ",
+              " where sharecode = ? "
+    prepare nv_cur2 from str
+    declare nv_cursor2 cursor for nv_cur2
+ 
+  declare q cursor for
+    select unique a.sharecode,'1' type
+      from tst a,tmst b
+     where board = 'L'
+       and b.sharetype not in ('B','C','D','E','G','H')
+       and b.sdcflag = '1'
+       and a.shareid = b.shareid
+     union
+    select unique a.sharecode,'2' type
+      from tst a,tmst b
+     where board = 'F'
+       and b.sharetype not in ('B','C','D','E','G','H')
+       and b.sdcflag = '1'
+       and a.shareid = b.shareid
+     union
+    select unique a.sharecode,'3' type
+      from tst a,tmst b
+     where board = 'U'
+       and b.sharetype not in ('B','C','D','E')
+       and b.sdcflag = '1'
+       and a.shareid = b.shareid
+     union
+    select unique a.sharecode,'4' type
+      from tst a,tmst b
+     where board = 'R'
+       and b.sharetype not in ('B','C','D','E')
+       and b.sdcflag = '1'
+       and a.shareid = b.shareid
+     union
+    select unique a.sharecode,'5' type
+      from tst a,tmst b
+     where b.sharetype in ('B','C','D','E','G','H')
+       and b.sdcflag = '1'
+       and a.shareid = b.shareid
+     order by 2,1
+ 
+#INDEX|ksr202|tst|shareid|sharecode|
+#INDEX|ksr202|tmst|sharetype,shareid|sharetype|
+#INDEX|ksr202|mlsd|matdate,inpurpose,outpurpose,loctype,sharecode||
+#INDEX|ksr202|taccbal|date,sharecode||
+#EndSQL
+ 
+  start report print0_report to KN_OUTPUT_FILE
+  let flagdat = 0
+  initialize d.* to null
+  foreach q into d.nvsharecode,d.type
+     open nv_cursor2 using d.nvsharecode
+     fetch nv_cursor2 into d.nvunit
+     close nv_cursor2
+     if d.nvunit is null then
+       let d.nvunit = 0
+     end if
+     let d.sdcunit = null
+     open sdc_cursor using d.nvsharecode
+     fetch sdc_cursor  into d.sdcunit
+     close sdc_cursor
+     if d.sdcunit is null then
+        let d.sdcunit = 0
+     end if
+     let d.sdcsharecode = d.nvsharecode
+     let d.diffunit = d.nvunit  - d.sdcunit
+     if d.diffunit <> 0 then
+        let flagdat = 1
+        output to report print0_report(d.*)
+     end if
+  end foreach
+ 
+  if flagdat = 0 then
+     initialize d.* to null
+     output to report print0_report(d.*)
+  end if
+ 
+  finish report print0_report
+end function
+#---------------------------------------------------------------------------
+report print0_report(r)
+#---------------------------------------------------------------------------
+  define r record
+    type            char(1),
+    nvsharecode     like tst.sharecode,
+    nvunit          like mlsd.inunit,
+    sdcsharecode    like tst.sharecode,
+    sdcunit         like mlsd.inunit,
+    diffunit        like mlsd.inunit
+ end record
+ 
+  output
+     top    margin 1
+     bottom margin 1
+     left   margin 0
+     right  margin 0
+     page   length 42
+ 
+ 
+  format
+     page header
+          call fgl_setlpp()
+          print column   1,KN_COMPANY_NAME clipped,
+                column   89,"Page : ",pageno using "####"
+          print column   1,"Daily Unit-In-Set Control Report"
+          print column   1,"As At : ",kd_bankdate(in.date1,-1) using "dd/mm/yyyy"
+          print column   1,KN_REPORT_LINE[1,103]
+          print column   1,HEAD1 clipped
+          print column   1,HEAD2 clipped
+          print column   1,KN_REPORT_LINE[1,103]
+ 
+     before group of r.type
+       case
+         when r.type = '1' print column  1,"** Local **"
+         when r.type = '2' print column  1,"** Foreign **"
+         when r.type = '3' print column  1,"** TTF **"
+         when r.type = '4' print column  1,"** NVDR **"
+         when r.type = '5' print column  1,"** ตราสารหนี้ **"
+       end case
+ 
+     after group of r.type
+       skip 1 line
+ 
+     on every row
+        if flagdat = 0 then
+          print column 1,KN_REPORT_NOTFOUND
+        else
+             let LINE1 = DETAIL1
+             let LINE1 = ks_prformat(LINE1,1,r.nvsharecode)
+             let LINE1 = ks_prformat(LINE1,2,r.nvunit using "--,---,---,---,--&")
+             let LINE1 = ks_prformat(LINE1,3,r.sdcsharecode)
+             let LINE1 = ks_prformat(LINE1,4,r.sdcunit using "--,---,---,---,--&")
+             let LINE1 = ks_prformat(LINE1,5,r.diffunit  using "--,---,---,---,--&")
+ 
+             print column 1 ,LINE1 clipped
+       end if
+ 
+     page trailer
+          print column   1,KN_REPORT_LINE[1,103]
+          print column   1,KN_REPORT_TRAILER[1,103]
+          print column   1,KN_REPORT_LINE[1,103]
+ 
+     on last row
+          print column   1,KN_REPORT_END
+ 
+end report
+#---------------------------------------------------------------------------
+function report1_loc()
+#---------------------------------------------------------------------------
+define d record
+       location   like ptiloc.ptiloccode,
+       chkdgt     like ptiloc.ptilocchkdgt,
+       sharecode  like mlsd.sharecode,
+       aunit      like mlsd.inunit,
+       bunit      like mlsd.inunit,
+       diffunit   like mlsd.inunit,
+       type       char(1)
+   end record
+ 
+#StartSQL
+ 
+   select a.sharecode,b.ptiloccode,b.ptilocchkdgt,sum(a.nvunit) nvunit
+     from temp_select a, ptiloc b
+    where b.sdcloccode =  a.loccode
+    group by a.sharecode, b.ptiloccode,b.ptilocchkdgt
+     into temp temp_select2 with no log
+ 
+   create index select_index2 on temp_select2 (sharecode,ptiloccode)
+ 
+   select a.sharecode,b.ptiloccode,b.ptilocchkdgt,sum(a.unit) sdcunit
+     from taccbal a , ptiloc b
+    where a.date_code = l_yesterday
+      and b.sdcloccode = a.loccode
+    group by a.sharecode, b.ptiloccode,b.ptilocchkdgt
+     into temp sdc_tab2 with no log
+ 
+   create index sdc_tab2_idx on sdc_tab2 (sharecode,ptiloccode)
+ 
+   create temp table temp_diff (
+      ptiloccode  char(12),
+      ptilocchkdgt char(1),
+      sharecode   char(20),
+      a_unit      decimal(20,6),
+      b_unit      decimal(20,6),
+      diff        decimal(20,6)
+   )
+ 
+   insert into temp_diff
+   select a.ptiloccode,a.ptilocchkdgt,a.sharecode,a.nvunit,b.sdcunit,a.nvunit-b.sdcunit diff
+     from temp_select2 a,sdc_tab2 b
+    where a.sharecode = b.sharecode
+      and a.ptiloccode = b.ptiloccode
+      and a.nvunit <> b.sdcunit
+ 
+   insert into temp_diff
+   select a.ptiloccode,a.ptilocchkdgt,a.sharecode,a.nvunit,0,a.nvunit diff
+     from temp_select2 a
+    where not exists ( select * from sdc_tab2
+                        where a.sharecode = sdc_tab2.sharecode 
+                          and a.ptiloccode = sdc_tab2.ptiloccode)
+     and a.nvunit <> 0
+ 
+   insert into temp_diff
+   select b.ptiloccode,b.ptilocchkdgt,b.sharecode,0,b.sdcunit,b.sdcunit *(-1) diff
+     from sdc_tab2 b
+    where not exists ( select * from temp_select2
+                        where b.sharecode = temp_select2.sharecode
+                          and b.ptiloccode = temp_select2.ptiloccode)
+      and b.sdcunit <> 0
+ 
+   select b.sharecode,b.board,a.sharetype
+     from tmst a, tst b
+    where a.xchgmkt in ('1','3','9')
+      and a.sdcflag = '1'
+      and a.shareid = b.shareid
+     into temp tmptst with no log
+ 
+   declare q1 cursor for
+   select a.ptiloccode,a.ptilocchkdgt,a.sharecode,a.a_unit,a.b_unit,a.diff,'1' type
+     from temp_diff a, tmptst b
+    where b.board = 'L'
+      and b.sharetype not in ('B','C','D','E','G','H')
+      and a.sharecode = b.sharecode
+    union
+   select a.ptiloccode,a.ptilocchkdgt,a.sharecode,a.a_unit,a.b_unit,a.diff,'2' type
+     from temp_diff a, tmptst b
+    where b.board = 'F'
+      and b.sharetype not in ('B','C','D','E','G','H')
+      and a.sharecode = b.sharecode
+    union
+   select a.ptiloccode,a.ptilocchkdgt,a.sharecode,a.a_unit,a.b_unit,a.diff,'3' type
+     from temp_diff a, tmptst b
+    where  b.board = 'U'
+      and b.sharetype not in ('B','C','D','E')
+      and a.sharecode = b.sharecode
+    union
+   select a.ptiloccode,a.ptilocchkdgt,a.sharecode,a.a_unit,a.b_unit,a.diff,'4' type
+     from temp_diff a, tmptst b
+    where  b.board = 'R'
+      and b.sharetype not in ('B','C','D','E')
+      and a.sharecode = b.sharecode
+    union
+   select a.ptiloccode,a.ptilocchkdgt,a.sharecode,a.a_unit,a.b_unit,a.diff,'5' type
+     from temp_diff a, tmptst b
+    where b.sharetype in ('B','C','D','E','G','H')
+      and a.sharecode = b.sharecode
+    order by type,a.sharecode,a.ptiloccode,a.ptilocchkdgt
+ 
+#INDEX|ksr202|tst|shareid|sharecode|
+#INDEX|ksr202|tmst|sharetype,shareid|sharetype|
+#INDEX|ksr202|mlsd|matdate,inpurpose,outpurpose,loctype,sharecode||
+#INDEX|ksr202|taccbal|date,sharecode||
+#EndSQL
+ 
+   start report print1_report to KN_OUTPUT_FILE
+ 
+   let flagdat = 0
+   initialize d.* to null
+   foreach q1 into d.*
+      let flagdat = 1
+      output to report print1_report(d.*)
+   end foreach
+ 
+   if flagdat = 0 then
+      initialize d.* to null
+      output to report print1_report(d.*)
+   end if
+ 
+   finish report print1_report
+end function
+#---------------------------------------------------------------------------
+report print1_report(r)
+#---------------------------------------------------------------------------
+define r record
+       location   like ptiloc.ptiloccode,
+       chkdgt     like ptiloc.ptilocchkdgt,
+       sharecode  like mlsd.sharecode,
+       aunit      like mlsd.inunit,
+       bunit      like mlsd.inunit,
+       diffunit   like mlsd.inunit,
+       type       char(1)
+   end record
+ define r_sharecode  like mlsd.sharecode,
+        r_location   char(15)
+ 
+   output
+      top    margin 1
+      bottom margin 1
+      left   margin 0
+      right  margin 0
+      page   length 42
+ 
+   format
+      page header
+         call fgl_setlpp()
+         print column   1,KN_COMPANY_NAME clipped,
+               column  80,"Page : ",pageno using "####"
+         print column   1,"Daily Unit-In-Set Control Report By Location"
+         print column   1,"As At : ",kd_bankdate(in.date1,-1) using "dd/mm/yyyy"
+         print column   1,KN_REPORT_LINE[1,94]
+         print column   1,HEAD1 clipped
+         print column   1,HEAD2 clipped
+         print column   1,KN_REPORT_LINE[1,94]
+ 
+      before group of r.type
+         case
+            when r.type = '1' print column  1,"** Local **"
+            when r.type = '2' print column  1,"** Foreign **"
+            when r.type = '3' print column  1,"** TTF **"
+            when r.type = '4' print column  1,"** NVDR **"
+            when r.type = '5' print column  1,"** ตราสารหนี้ **"
+         end case
+ 
+     after group of r.type
+         skip 1 line
+ 
+     before group of r.sharecode
+         let r_sharecode = r.sharecode
+ 
+      on every row
+         if flagdat = 0 then
+            print column   1,KN_REPORT_NOTFOUND
+         else
+            let r_location = r.location clipped,r.chkdgt clipped
+            let LINE1 = DETAIL1
+            let LINE1 = ks_prformat(LINE1,1,r_sharecode clipped )
+            let LINE1 = ks_prformat(LINE1,2,r_location clipped )
+            let LINE1 = ks_prformat(LINE1,3,r.aunit using "--,---,---,---,--&")
+            let LINE1 = ks_prformat(LINE1,4,r.bunit using "--,---,---,---,--&")
+            let LINE1 = ks_prformat(LINE1,5,r.diffunit using "--,---,---,---,--&")
+            print column   1,LINE1 clipped
+         end if
+ 
+         if r_sharecode = r.sharecode then
+            let r_sharecode = ""
+	 end if
+ 
+      page trailer
+         print column   1,KN_REPORT_LINE[1,94]
+         print column   1,KN_REPORT_TRAILER[1,94]
+         print column   1,KN_REPORT_LINE[1,94]
+ 
+      on last row
+         print column   1,KN_REPORT_END
+end report
+#---------------------------------------------------------------------------
+function set_layout()
+#---------------------------------------------------------------------------
+#StartLayOut
+if in.showbyloc = 0 then
+   ------------------------------------------ showbyloc = 0 -----------------------------------------------------
+   let DETAIL1 = "^1                   ^2                    ^3                   ^4                  ^5                "
+   #               xxxxxxxxx1xxxxxxxx2 -9,999,999,999,999    xxxxxxxxx1xxxxxxxxx2 -9,999,999,999,999  -9,999,999,999,999
+   let HEAD1   = "|--------------- ^1     ---------------|  |---------------   SDC   ---------------|"
+   let HEAD2   = " Sharecode                         Unit    Sharecode                          Unit           Diff Unit"
+else
+   ------------------------------------------ showbyloc = 1 -----------------------------------------------------
+   --t LINE1   = "----------------------------------------------------------------------------------------------"
+   let HEAD1   = "                                   |----- ^1     -----| |-----  SDC  -----|                   "
+   let HEAD2   = "Sharecode             Location                    Unit                Unit           Diff Unit"
+   --t LINE1   = "----------------------------------------------------------------------------------------------"
+   #             "xxxxxxxxx1xxxxxxxxx2  xxxxxxxxx1xx  -9,999,999,999,999  -9,999,999,999,999  -9,999,999,999,999"
+   let DETAIL1 = "^1                    ^2            ^3                  ^4                  ^5                "
+   --t LINE1   = "----------------------------------------------------------------------------------------------"
+end if
+let HEAD1 = ks_prformat(HEAD1,1,l_compa clipped )
+#EndLayOut
+end function
+#----------------------------------------------------------------------
+
+
