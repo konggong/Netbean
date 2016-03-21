@@ -3,29 +3,50 @@
     <head>
         <meta name="generator" content="HTML Tidy for Linux (vers 25 March 2009), see www.w3.org">
         <title>Diff</title>
-        <script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
-        <script src="js/diff_match_patch.js"></script>
+        <script src="./js/jquery_v1.11.1.min.js"></script>
+        <script src="./js/diff_match_patch.js"></script>
         <script>
-            //$(document).ready(function() {
+            $(document).ready(function() {
+                $("#divwall").click(function(e) {
+                    if (e.target !== this)
+                        return;
+                    $("#divwall").removeClass("b1");
+                    $("#divbox").removeClass("c1").empty();
+                });
+            });
+//----------------------------------------------------              
             function loadFile(i) {
                 //alert(i);
                 //prompt("#date" + i + "| Data : ",$("#data"+i).serialize());
                 //return;
+                
+                //หาค่าที่ส่งมาเก็บไว้ใน array values
+                var values = {};
+                $.each($("#data" + i).serializeArray(), function(i, field) {
+                    values[field.name] = field.value;
+                });
+                var getValue = function(valueName) {
+                    return values[valueName];
+                };
+                
+                //เรียกใช้ getFile.jsp อ่านไฟล์จาก server infotmix
                 $.ajax({
                     type: "post",
                     data: $("#data" + i).serialize(),
                     url: "./jsp/getFile.jsp",
                     success: function(data) {
                         $("#text" + i).val(data.trim());
+                        $("#outlog").append("<br><a1>Load File : [" + getValue("host") + "] " + getValue("filepath") + " ...Success</a1>");
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
                         alert("Error : " + errorThrown.toString());
+                        $("#outlog").html("<a2>Load File : Error " + errorThrown.toString() + "</a2>");
                     }
                 });
             }
-//----------------------------------------------------
-            var dmp = new diff_match_patch();
+//----------------------------------------------------            
             function launch() {
+                var dmp = new diff_match_patch();
                 var text1 = document.getElementById('text1').value;
                 var text2 = document.getElementById('text2').value;
                 dmp.Diff_Timeout = parseFloat(1);
@@ -35,33 +56,82 @@
                 var ms_end = (new Date()).getTime();
                 dmp.diff_cleanupSemantic(d);
                 var ds = dmp.diff_prettyHtml(d);
-                document.getElementById('outputdiv').innerHTML = ds + '<br><br>Time: ' + (ms_end - ms_start) / 1000 + 's';
+                $("#divwall").addClass("b1").html('<div id="divbox"></div>');
+                $("#divbox").html(ds + '<br><br>Time: ' + (ms_end - ms_start) / 1000 + 's').addClass("c1");
             }
-            //});
-        </script>        
+
+        </script>
+        <link rel="stylesheet" type="text/css" href="./css/cssreset-min.css">
         <style type="text/css">
-            .c1 {
+            body {
+                width: 100%;
+                height: 100%;
+                overflow:hidden;
                 font-family: "Courier New",Courier,monospace;
             }
-            textarea.c1 {
-                width: 100%;                
+            h1 { 
+                display: block;
+                font-size: 2em;
+                margin-top: 0.67em;
+                margin-bottom: 0.67em;
+                margin-left: 0;
+                margin-right: 0;
+                font-weight: bold;
             }
-            div.b1 {
-                border:1px solid red;
-                width: 100%;
-                position: fixed; 
-                /*
+            h2 {
+                display: block;
+                font-size: 1.5em;
+                margin-top: 0.83em;
+                margin-bottom: 0.83em;
+                margin-left: 0;
+                margin-right: 0;
+                font-weight: bold;
+            }
+            h3 { 
+                display: block;
+                font-size: 1em;
+                margin-top: 1em;
+                margin-bottom: 1em;
+                margin-left: 0;
+                margin-right: 0;
+                font-weight: normal;
+            }
+            td {
+                width: 50%;
+                margin: 0% 1%;
+            }
+            textarea {
+                width: 100%; 
+                font-size: 0.5em;
+            }
+            input[name="filepath"] {
+                width: 50%;                
+            }
+            .b1 {
+                /*border:1px solid red;*/
                 left: 0px;
                 top: 0px;
-                background-color: black;
-                */
-                z-index:-1;
+                width: 100%;
+                height: 100%;
+                position: fixed; 
+                background-color: #000;
+                z-index:10;
             }
-            div.c1 {
-                border:1px solid green;
-                width: 50%;
-                display: table;
+            .c1 {
+                /*border:1px solid green;*/
+                width: 70%;
+                height: 100%;
                 margin: 0 auto;
+                background: #FFF;
+                overflow-y: auto;
+                z-index:20;
+                font-size: 0.8em;
+            }
+            a1 {
+                color: #33cc00;
+            }
+            a2 {
+                color: #ff3300;
             }
         </style>
     </head>
@@ -69,7 +139,7 @@
         <h1>Diff Program</h1>
         <table width="100%">
             <tr>
-                <td width="50%">
+                <td>
                     <form action="/" id="data1">
                         <h3>
                             Program 1 : 
@@ -79,14 +149,14 @@
                             <input type="hidden" name="port" value="22">
                             <input type="hidden" name="username" value="pww">
                             <input type="hidden" name="password" value="pww">
-                            <input type="text" name="filepath" value="/u/4gl/client/src/kfr077.4gl">
+                            <input type="text" name="filepath" value="/u/4gl/cs_src/bsp004_1.4gl">
                             <input type="button" onclick="loadFile(1)" value="Load">
 
                         </h3>
                     </form>
-                    <textarea id="text1" class="c1" rows="10" cols="20">KONG</textarea>
+                    <textarea id="text1" rows="10" cols="20">KONG</textarea>
                 </td>
-                <td width="50%">
+                <td>
                     <form action="/" id="data2">
                         <h3>
                             Program 2 : 
@@ -96,16 +166,17 @@
                             <input type="hidden" name="port" value="22">
                             <input type="hidden" name="username" value="pww">
                             <input type="hidden" name="password" value="pww">
-                            <input type="text" name="filepath" value="/u/4gl/client/src/kfr077.4gl.pww">
+                            <input type="text" name="filepath" value="/u/4gl/cs_src/bsp004_1.4gl.pww">
                             <input type="button" onclick="loadFile(2)" value="Load">
                         </h3>
                     </form>
-                    <textarea id="text2" class="c1" rows="10" cols="20">KONGGONG</textarea>
+                    <textarea id="text2" rows="10" cols="20">KONGGONG</textarea>
                 </td>
             </tr>
         </table>
-
-        <p><input type="button" onclick="launch()" value="Compute Diff"></p>
-        <div class="b1"><div class="c1" id="outputdiv"></div></div>
+        <br>
+        <p><input type="button" onclick="launch()" value=" Program Diff "></p>
+        <div id="divwall"></div>
+        <div id="outlog"></div>
     </body>
 </html>
