@@ -22,7 +22,13 @@ http://localhost:8084/ControlVersion/jsp/getFile.jsp?
 <%@ page errorPage="error.jsp" %>
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%!
-    private String readFile(String host, int port, String username, final String password, String filepath) {
+    String username = "";
+    String password = "";
+    String host = "";
+    int port = -1;
+    String filepath = "";
+    
+    private String readFile() {
         ChannelSftp sftp = null;
         Channel channel = null;
         Session sshSession = null;
@@ -31,7 +37,6 @@ http://localhost:8084/ControlVersion/jsp/getFile.jsp?
         
         try {
             JSch jsch = new JSch();
-            jsch.getSession(username, host, port);
             sshSession = jsch.getSession(username, host, port);
             sshSession.setPassword(password);
             Properties sshConfig = new Properties();
@@ -91,11 +96,11 @@ http://localhost:8084/ControlVersion/jsp/getFile.jsp?
     }
 %>
 <%
-    String username = request.getParameter("username");
-    String password = request.getParameter("password");
-    String host = request.getParameter("host");
-    int port = Integer.parseInt(request.getParameter("port"));
-    String filepath = request.getParameter("filepath");
+    username = request.getParameter("username");
+    password = request.getParameter("password");
+    host = request.getParameter("host");
+    port = Integer.parseInt(request.getParameter("port"));
+    filepath = request.getParameter("filepath");
     
     System.out.println("username = " + username);
     System.out.println("password = " + password);
@@ -103,6 +108,6 @@ http://localhost:8084/ControlVersion/jsp/getFile.jsp?
     System.out.println("port     = " + port);
     System.out.println("filepath = " + filepath);
     
-    String val = readFile(host,port,username,password,filepath);
+    String val = readFile();
     out.print(val);
 %>

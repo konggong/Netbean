@@ -27,13 +27,28 @@ public class FTPKCC {
             session.connect();
             System.out.println("Connected");
 
-            command1 = "cd /u/4gl/cs_src/pww; ls -l";
             Channel channel = session.openChannel("exec");
+            
+//            command1 += ". .profile;";
+//            command1 += "cd /u/4gl/cs_src/;";
+//            command1 += "kvm -o pww0000.4gl;";
+            
+//            command1 += ". .profile;";
+//            command1 += "cd /u/4gl/cs_src/;";
+//            command1 += "echo y | cp pww0000.4gl.pww pww0000.4gl;";
+            
+//            command1 += ". .profile;";
+//            command1 += "cd /u/4gl/cs_src/;";
+//            command1 += "/u/4gl/cs_src/pww/k_chg.sh pww0000.4gl";            
+
+            command1 += ". .profile;";
+            command1 += "cd /u/4gl/cs_src/;";
+            command1 += "echo 'control version test2' | kvm -c pww0000.4gl;";
             ((ChannelExec) channel).setCommand(command1);
             channel.setInputStream(null);
             ((ChannelExec) channel).setErrStream(System.err);
             channel.connect();
-            showMoniter(channel);
+            System.out.println(showMoniter(channel));
             
             channel.disconnect();  
             session.disconnect();
@@ -45,8 +60,9 @@ public class FTPKCC {
 
     }
 
-    public static void showMoniter(Channel channel) {
+    public static String showMoniter(Channel channel) {
         InputStream in = null;
+        String result = null;
         try {
             in = channel.getInputStream();
             byte[] tmp = new byte[1024];
@@ -56,15 +72,17 @@ public class FTPKCC {
                     if (i < 0) {
                         break;
                     }
-                    System.out.print(new String(tmp, 0, i));
+                    result = new String(tmp, 0, i);
+                    //System.out.print(result);
                 }
                 if (channel.isClosed()) {
-                    System.out.println("exit-status: " + channel.getExitStatus());
+                    result = result.concat("\nexit-status: " + channel.getExitStatus());
+                    //System.out.println("exit-status: " + channel.getExitStatus());
                     break;
                 }
                 try {
                     Thread.sleep(1000);
-                } catch (Exception ex) {
+                } catch (InterruptedException ex) {
                     Logger.getLogger(FTPKCC.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
@@ -72,10 +90,13 @@ public class FTPKCC {
             Logger.getLogger(FTPKCC.class.getName()).log(Level.SEVERE, null, ex);
         } finally {
             try {
-                in.close();
+                if (in != null) {
+                    in.close();
+                }
             } catch (IOException ex) {
                 Logger.getLogger(FTPKCC.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
+        return result;
     }
 }

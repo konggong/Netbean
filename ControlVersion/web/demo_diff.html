@@ -10,8 +10,8 @@
                 $("#divwall").click(function(e) {
                     if (e.target !== this)
                         return;
-                    $("#divwall").removeClass("b1");
-                    $("#divbox").removeClass("c1").empty();
+                    $("#divwall").removeClass("popupwall");
+                    $("#divbox").removeClass("popuptext").empty();
                 });
             });
 //----------------------------------------------------              
@@ -19,7 +19,7 @@
                 //alert(i);
                 //prompt("#date" + i + "| Data : ",$("#data"+i).serialize());
                 //return;
-                
+
                 //หาค่าที่ส่งมาเก็บไว้ใน array values
                 var values = {};
                 $.each($("#data" + i).serializeArray(), function(i, field) {
@@ -28,12 +28,12 @@
                 var getValue = function(valueName) {
                     return values[valueName];
                 };
-                
+
                 //เรียกใช้ getFile.jsp อ่านไฟล์จาก server infotmix
                 $.ajax({
                     type: "post",
                     data: $("#data" + i).serialize(),
-                    url: "./jsp/getFile.jsp",
+                    url: "./jsp/readFile.jsp",
                     success: function(data) {
                         $("#text" + i).val(data.trim());
                         $("#outlog").append("<br><a1>Load File : [" + getValue("host") + "] " + getValue("filepath") + " ...Success</a1>");
@@ -45,7 +45,7 @@
                 });
             }
 //----------------------------------------------------            
-            function launch() {
+            function diff() {
                 var dmp = new diff_match_patch();
                 var text1 = document.getElementById('text1').value;
                 var text2 = document.getElementById('text2').value;
@@ -56,8 +56,8 @@
                 var ms_end = (new Date()).getTime();
                 dmp.diff_cleanupSemantic(d);
                 var ds = dmp.diff_prettyHtml(d);
-                $("#divwall").addClass("b1").html('<div id="divbox"></div>');
-                $("#divbox").html(ds + '<br><br>Time: ' + (ms_end - ms_start) / 1000 + 's').addClass("c1");
+                $("#divwall").addClass("popupwall").html('<div id="divbox"></div>');
+                $("#divbox").html(ds + '<br><br>Time: ' + (ms_end - ms_start) / 1000 + 's').addClass("popuptext");
             }
 
         </script>
@@ -107,7 +107,13 @@
             input[name="filepath"] {
                 width: 50%;                
             }
-            .b1 {
+            .bt {
+                width: 120px;
+                font-size: 0.8em;
+                font-weight: bold;
+            }
+            
+            .popupwall {
                 /*border:1px solid red;*/
                 left: 0px;
                 top: 0px;
@@ -117,7 +123,7 @@
                 background-color: #000;
                 z-index:10;
             }
-            .c1 {
+            .popuptext {
                 /*border:1px solid green;*/
                 width: 70%;
                 height: 100%;
@@ -128,7 +134,7 @@
                 font-size: 0.8em;
             }
             a1 {
-                color: #33cc00;
+                color: #339900;
             }
             a2 {
                 color: #ff3300;
@@ -175,8 +181,12 @@
             </tr>
         </table>
         <br>
-        <p><input type="button" onclick="launch()" value=" Program Diff "></p>
-        <div id="divwall"></div>
-        <div id="outlog"></div>
+        <input type="button" class="bt" onclick="diff()" value="Program Diff">
+        <input type="button" class="bt" onclick="openVer()" value="Open Version">
+        <input type="button" class="bt" onclick="moveProg()" value="Copy">
+        <input type="button" class="bt" onclick="ctrlVer()" value="Close Version">
+        <input type="button" class="bt" onclick="Auto()" value="Auto">
+        <div id="divwall"></div><br>
+        <div id="outlog">=== Log ===</div>
     </body>
 </html>
