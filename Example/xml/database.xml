@@ -61,7 +61,7 @@
  -->
 <!-- 
     <comment>MySQL</comment>
-    <entry key="url">jdbc:mysql://emerald:3306/authendb</entry>
+	<entry key="url">jdbc:mysql://emerald:3306/authendb</entry>
     <entry key="utf8">?useUnicode=true&amp;characterEncoding=UTF-8</entry>
     <entry key="username">mysql</entry>
     <entry key="password">password</entry>

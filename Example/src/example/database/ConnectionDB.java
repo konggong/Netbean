@@ -5,7 +5,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import org.h2.tools.DeleteDbFiles;
 
 public class ConnectionDB {
 
@@ -30,7 +29,7 @@ public class ConnectionDB {
      * echo $INFORMIXSERVER
      * 
      * POST
-     * netstat -ln | grep -i tcp
+     * netstat -ln | grep -i 'tcp '
      * netstat -ln | grep -i {IP}
      * 
      */

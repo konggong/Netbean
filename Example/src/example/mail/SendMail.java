@@ -1,3 +1,4 @@
+//http://crunchify.com/java-mailapi-example-send-an-email-via-gmail-smtp/
 package example.mail;
 
 import java.util.Properties;
@@ -35,7 +36,7 @@ public class SendMail {
         getMailSession = Session.getDefaultInstance(mailServerProperties, null);
         generateMailMessage = new MimeMessage(getMailSession);
         generateMailMessage.addRecipient(Message.RecipientType.TO, new InternetAddress("silerbullet.kong@gmail.com"));
-        generateMailMessage.addRecipient(Message.RecipientType.CC, new InternetAddress("pww@freewillsolutions.com"));
+        generateMailMessage.addRecipient(Message.RecipientType.CC, new InternetAddress("silerbullet.kong@gmail.com"));
         generateMailMessage.setSubject("Greetings from iCrunched..");
         String emailBody = "Test email by iCrunched JavaMail API example. " + "<br><br> Regards, <br>iCrunched Admin";
         generateMailMessage.setContent(emailBody, "text/html");

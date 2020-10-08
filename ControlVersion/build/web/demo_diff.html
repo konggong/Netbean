@@ -139,6 +139,16 @@
             a2 {
                 color: #ff3300;
             }
+            .formtext {
+                width: 20%;
+                position: relative;
+            }
+            
+            .forminput {
+                width: 20%;
+                position: relative;
+            }
+            
         </style>
     </head>
     <body>
@@ -181,10 +191,22 @@
             </tr>
         </table>
         <br>
+        <form action="/" id="prID">
+            <div class="formtext">
+                PR <br>
+                Comment Version <br>
+            </div>
+            <div class="forminput">
+                <input type="text" name="pr" value=""><br>
+                <input type="text" name="comment" value=""><br>
+            </div>
+        </form>
         <input type="button" class="bt" onclick="diff()" value="Program Diff">
         <input type="button" class="bt" onclick="openVer()" value="Open Version">
         <input type="button" class="bt" onclick="moveProg()" value="Copy">
+        <input type="button" class="bt" onclick="ctrlVer()" value="New Version">
         <input type="button" class="bt" onclick="ctrlVer()" value="Close Version">
+        <input type="button" class="bt" onclick="ctrlVer()" value="Up to PR">
         <input type="button" class="bt" onclick="Auto()" value="Auto">
         <div id="divwall"></div><br>
         <div id="outlog">=== Log ===</div>
